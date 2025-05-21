@@ -14,7 +14,7 @@ yarn-error.log*
 lerna-debug.log*
 
 # REMOVE .Bin directory
-.bin
+bin/
 
 # OS
 .DS_Store
