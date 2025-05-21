@@ -6,6 +6,7 @@ import (
 
 	"github.com/arthurdias01/gobid/internal/store/pgstore"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
@@ -17,6 +18,7 @@ type UsersService struct {
 }
 
 var ErrDuplicatedEmailOrUsername = errors.New("invalid username or email")
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 func NewUsersService(pool *pgxpool.Pool) *UsersService {
 	return &UsersService{
@@ -49,4 +51,28 @@ func (us *UsersService) CreateUser(ctx context.Context, userName, email, passwor
 	}
 
 	return id, nil
+}
+
+func (us *UsersService) AuthenticateUser(ctx context.Context, email, password string) (uuid.UUID, error) {
+	user, err := us.queries.GetUserByEmail(ctx, email)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	user, err = us.queries.GetUserByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return uuid.UUID{}, ErrInvalidCredentials
+		}
+		return uuid.UUID{}, err
+	}
+
+	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return uuid.UUID{}, ErrInvalidCredentials
+		}
+		return uuid.UUID{}, err
+	}
+
+	return user.ID, nil
 }

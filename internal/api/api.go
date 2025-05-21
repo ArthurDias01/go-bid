@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/alexedwards/scs/v2"
 	"github.com/arthurdias01/gobid/internal/services"
 	"github.com/go-chi/chi/v5"
 )
@@ -8,6 +9,7 @@ import (
 type API struct {
 	Router       *chi.Mux
 	UsersService *services.UsersService
+	Sessions     *scs.SessionManager
 }
 
 // func (api *API) handleCreateUser(w http.ResponseWriter, r *http.Request) {

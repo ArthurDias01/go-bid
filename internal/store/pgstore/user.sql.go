@@ -50,18 +50,19 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (uuid.UUID, erro
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, user_name, email, bio, created_at, updated_at
+SELECT id, user_name, email, bio, created_at, updated_at, password_hash
 FROM users
 WHERE email = $1
 `
 
 type GetUserByEmailRow struct {
-	ID        uuid.UUID `json:"id"`
-	UserName  string    `json:"user_name"`
-	Email     string    `json:"email"`
-	Bio       string    `json:"bio"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID           uuid.UUID `json:"id"`
+	UserName     string    `json:"user_name"`
+	Email        string    `json:"email"`
+	Bio          string    `json:"bio"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	PasswordHash []byte    `json:"password_hash"`
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
@@ -74,6 +75,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.Bio,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PasswordHash,
 	)
 	return i, err
 }

@@ -2,18 +2,24 @@ package main
 
 import (
 	"context"
+	"encoding/gob"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/alexedwards/scs/pgxstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/arthurdias01/gobid/internal/api"
 	"github.com/arthurdias01/gobid/internal/services"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	gob.Register(uuid.UUID{})
 	if err := godotenv.Load(); err != nil {
 		panic(err)
 		// log.Fatal("Error loading .env file")
@@ -37,9 +43,17 @@ func main() {
 		panic(err)
 	}
 
+	s := scs.New()
+	s.Store = pgxstore.New(pool)
+	s.Lifetime = 24 * time.Hour
+	s.Cookie.HttpOnly = true
+	s.Cookie.SameSite = http.SameSiteLaxMode
+	s.Cookie.Secure = false
+
 	api := api.API{
 		Router:       chi.NewMux(),
 		UsersService: services.NewUsersService(pool),
+		Sessions:     s,
 	}
 
 	api.BindRoutes()

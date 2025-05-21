@@ -24,7 +24,7 @@ func (api *API) handleSignupUser(w http.ResponseWriter, r *http.Request) {
 
 	if errors.Is(err, services.ErrDuplicatedEmailOrUsername) {
 		_ = jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, map[string]any{
-			"error": "invalid username or email",
+			"error": "Email or username already taken",
 		})
 		return
 	}
@@ -36,9 +36,51 @@ func (api *API) handleSignupUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) handleSigninUser(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+	data, problems, err := jsonutils.DecodeValidJson[user.SignInUserRequest](r)
+	if err != nil {
+		_ = jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, problems)
+		return
+	}
+
+	id, err := api.UsersService.AuthenticateUser(r.Context(), data.Email, data.Password)
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidCredentials) {
+			_ = jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, map[string]any{
+				"error": "Invalid email or password",
+			})
+			return
+		}
+		_ = jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, map[string]any{
+			"error": "Internal server error",
+		})
+		return
+	}
+
+	err = api.Sessions.RenewToken(r.Context())
+	if err != nil {
+		_ = jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "Internal server error",
+		})
+		return
+	}
+
+	api.Sessions.Put(r.Context(), "AuthenticatedUserID", id)
+	jsonutils.EncodeJson(w, r, http.StatusOK, map[string]any{
+		"message": "User signed in successfully",
+	})
 }
 
 func (api *API) handleSignoutUser(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+	err := api.Sessions.RenewToken(r.Context())
+	if err != nil {
+		_ = jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "Internal server error",
+		})
+		return
+	}
+	api.Sessions.Remove(r.Context(), "AuthenticatedUserID")
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, map[string]any{
+		"message": "User signed out successfully",
+	})
 }
