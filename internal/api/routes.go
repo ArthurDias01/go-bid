@@ -1,11 +1,8 @@
 package api
 
 import (
-	"os"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gorilla/csrf"
 )
 
 func (api *API) BindRoutes() {
@@ -24,17 +21,20 @@ func (api *API) BindRoutes() {
 
 	// csrf Secure false for dev only**
 	// GOBID_CSRF_KEY -> generate with
-	csrfMiddleware := csrf.Protect([]byte(os.Getenv("GOBID_CSRF_KEY")), csrf.Path("/api/v1"), csrf.Secure(false))
+	// csrfMiddleware := csrf.Protect([]byte(os.Getenv("GOBID_CSRF_KEY")), csrf.Path("/api/v1"), csrf.Secure(false))
 
-	api.Router.Use(csrfMiddleware)
+	// api.Router.Use(csrfMiddleware)
 
 	api.Router.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-			r.Get("/csrftoken", api.HangleGetCSRFToken)
+			// r.Get("/csrftoken", api.HangleGetCSRFToken)
 			r.Route("/users", func(r chi.Router) {
 				r.Post("/signup", api.handleSignupUser)
 				r.Post("/signin", api.handleSigninUser)
 				r.With(api.AuthMiddleware).Post("/signout", api.handleSignoutUser)
+			})
+			r.Route("/products", func(r chi.Router) {
+				r.Post("/", api.handleCreateProduct)
 			})
 		})
 	})
