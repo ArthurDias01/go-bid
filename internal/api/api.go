@@ -4,6 +4,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/arthurdias01/gobid/internal/services"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/websocket"
 )
 
 type API struct {
@@ -11,12 +12,7 @@ type API struct {
 	UsersService    *services.UsersService
 	ProductsService *services.ProductsService
 	Sessions        *scs.SessionManager
+	WsUpgrader      websocket.Upgrader
+	AuctionLobby    services.AuctionLobby
+	BidsService     services.BidsService
 }
-
-// func (api *API) handleCreateUser(w http.ResponseWriter, r *http.Request) {
-
-// }
-
-// func (api *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
-
-// }

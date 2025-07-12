@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/arthurdias01/gobid/internal/jsonutils"
@@ -16,7 +17,9 @@ import (
 
 func (api *API) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("READING SESSION", "session cookie", api.Sessions.Exists(r.Context(), "AuthenticatedUserID"))
 		if !api.Sessions.Exists(r.Context(), "AuthenticatedUserID") {
+			slog.Info("SESSION DOESNT EXIST")
 			jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{
 				"message": "must be logged in",
 			})
