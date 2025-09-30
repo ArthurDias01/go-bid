@@ -40,7 +40,7 @@ func (api *API) BindRoutes() {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)
 					r.Post("/", api.handleCreateProduct)
-					// r.Get("/", api.handleGetProducts)
+					r.Get("/", api.handleGetProducts)
 					// r.Get("/{id}", api.handleGetProduct)
 					// r.Put("/{id}", api.handleUpdateProduct)
 					// r.Delete("/{id}", api.handleDeleteProduct)

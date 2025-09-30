@@ -17,14 +17,24 @@ import (
 
 func (api *API) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("READING SESSION", "session cookie", api.Sessions.Exists(r.Context(), "AuthenticatedUserID"))
+		// Debug: Log all cookies received
+		slog.Info("AUTH DEBUG",
+			"cookies", r.Cookies(),
+			"user_agent", r.UserAgent(),
+			"session_exists", api.Sessions.Exists(r.Context(), "AuthenticatedUserID"),
+		)
+
 		if !api.Sessions.Exists(r.Context(), "AuthenticatedUserID") {
-			slog.Info("SESSION DOESNT EXIST")
+			slog.Info("AUTH FAILED", "reason", "no session found")
 			jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{
 				"message": "must be logged in",
 			})
 			return
 		}
+
+		// Get the user ID for additional debugging
+		userID := api.Sessions.Get(r.Context(), "AuthenticatedUserID")
+		slog.Info("AUTH SUCCESS", "user_id", userID)
 		next.ServeHTTP(w, r)
 	})
 }
